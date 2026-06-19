@@ -1,151 +1,85 @@
-import streamlit as st
-import pandas as pd
-import math
-from pathlib import Path
+import streamlit as pd_app
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
-)
+# Set up a premium look for Smile Care Dental Clinic
+pd_app.set_page_config(page_title="SMILE CARE DENTAL CLINIC", page_icon="🦷", layout="centered")
 
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
+# Custom Styling for a premium Gold and Navy Blue Look
+pd_app.markdown("""
+    <style>
+    .main { background-color: #FAF9F6; }
+    .wallet-card {
+        background: linear-gradient(135deg, #0A2540 0%, #1A365D 100%);
+        color: #DFBA6B;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .stButton>button {
+        background-color: #0A2540 !important;
+        color: #DFBA6B !important;
+        border-radius: 8px !important;
+        border: 1px solid #DFBA6B !important;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
+# App Title with your specific branding
+pd_app.title("🦷 SMILE CARE DENTAL CLINIC")
+pd_app.caption("Your Premium Dental & Implant Care Partner")
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
+# Navigation Tabs
+tab1, tab2, tab3 = pd_app.tabs(["💳 Loyalty Wallet", "📅 Book Appointment", "💬 Message Support"])
 
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
+# Simulated Patient Data
+if 'points' not in pd_app.session_state:
+    pd_app.session_state.points = 350
 
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
+with tab1:
+    pd_app.markdown(f"""
+    <div class="wallet-card">
+        <p style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #BEE3F8;">Luxury Loyalty Card</p>
+        <p style="font-size: 16px; margin-bottom: 5px;">Your Treatment Points</p>
+        <h1 style="font-size: 48px; color: #DFBA6B; margin: 0;">{pd_app.session_state.points}</h1>
+        <p style="font-size: 14px; color: #E2E8F0;">Equivalent to ₹{pd_app.session_state.points}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    pd_app.info("✨ Collect points with every visit! 1 Point earned for every ₹100 spent.")
+    
+    # Referral Button
+    if pd_app.button("🎁 Refer a Friend & Earn 50 Points"):
+        pd_app.session_state.points += 50
+        pd_app.success("Referral link generated! 50 Points provisionally added to your wallet! 🎉")
+        pd_app.rerun()
 
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
+with tab2:
+    pd_app.subheader("Schedule Your Next Visit")
+    
+    treatment = pd_app.selectbox("Select Treatment Area", [
+        "Routine Consultation & Cleaning",
+        "Advanced Implant Consultation",
+        "Cosmetic & Smile Design",
+        "Follow-up / Post-Op Check"
+    ])
+    
+    date = pd_app.date_input("Choose Preferred Date")
+    timeslot = pd_app.radio("Select Timeslot", ["10:00 AM - 12:00 PM", "12:00 PM - 02:00 PM", "06:00 PM - 09:00 PM"])
+    
+    if pd_app.button("Confirm Appointment Booking"):
+        pd_app.success(f"Request submitted for {treatment} on {date} during {timeslot}. Our team will confirm via WhatsApp shortly!")
 
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
-
-    return gdp_df
-
-gdp_df = get_gdp_data()
-
-# -----------------------------------------------------------------------------
-# Draw the actual page
-
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
-
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
-
-# Add some spacing
-''
-''
-
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
-
-from_year, to_year = st.slider(
-    'Which years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
-
-countries = gdp_df['Country Code'].unique()
-
-if not len(countries):
-    st.warning("Select at least one country")
-
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
-
-''
-''
-''
-
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
-)
-
-''
-''
-
-
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
-
-st.header(f'GDP in {to_year}', divider='gray')
-
-''
-
-cols = st.columns(4)
-
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
-
-    with col:
-        first_gdp = first_year[first_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[last_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
+with tab3:
+    pd_app.subheader("Direct Message Support")
+    pd_app.caption("Our clinic team typically replies within 2 hours during clinic hours (10 AM - 8 PM).")
+    
+    user_msg = pd_app.text_area("How can we help you today?", placeholder="e.g., Experiencing mild sensitivity after my procedure...")
+    
+    if pd_app.button("Send Message"):
+        if user_msg:
+            pd_app.success("Message sent! Our support team will review your note shortly.")
+            pd_app.info("We’ll follow up as soon as possible during clinic hours.")
         else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
-
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
-        )
+            pd_app.warning("Please type a message before sending.")
