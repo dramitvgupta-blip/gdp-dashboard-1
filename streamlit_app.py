@@ -1,85 +1,70 @@
-import streamlit as pd_app
+import streamlit as st
 
-# Set up a premium look for Smile Care Dental Clinic
-pd_app.set_page_config(page_title="SMILE CARE DENTAL CLINIC", page_icon="🦷", layout="centered")
+# Set up premium clinic branding
+st.set_page_config(page_title="Smile Care Dental Clinic", page_icon="🦷", layout="centered")
 
-# Custom Styling for a premium Gold and Navy Blue Look
-pd_app.markdown("""
-    <style>
-    .main { background-color: #FAF9F6; }
-    .wallet-card {
-        background: linear-gradient(135deg, #0A2540 0%, #1A365D 100%);
-        color: #DFBA6B;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .stButton>button {
-        background-color: #0A2540 !important;
-        color: #DFBA6B !important;
-        border-radius: 8px !important;
-        border: 1px solid #DFBA6B !important;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+st.title("🦷 SMILE CARE DENTAL CLINIC")
+st.caption("Your Premium Dental & Implant Care Partner")
 
-# App Title with your specific branding
-pd_app.title("🦷 SMILE CARE DENTAL CLINIC")
-pd_app.caption("Your Premium Dental & Implant Care Partner")
+# --- MOCK PATIENT DATABASE ---
+PATIENT_DB = {
+    "9876543210": {"name": "Amit Gupta", "points": 350},
+    "9999988888": {"name": "Suresh Sharma", "points": 120},
+    "9820012345": {"name": "Priya Shah", "points": 500}
+}
 
-# Navigation Tabs
-tab1, tab2, tab3 = pd_app.tabs(["💳 Loyalty Wallet", "📅 Book Appointment", "💬 Message Support"])
+# --- LOGIN / LOOKUP SECTION ---
+st.sidebar.header("Patient Access")
+mobile_input = st.sidebar.text_input("Enter Mobile Number to View Account", placeholder="e.g., 9876543210")
 
-# Simulated Patient Data
-if 'points' not in pd_app.session_state:
-    pd_app.session_state.points = 350
+if mobile_input in PATIENT_DB:
+    current_user = PATIENT_DB[mobile_input]["name"]
+    current_points = PATIENT_DB[mobile_input]["points"]
+    st.sidebar.success(f"Logged in as: {current_user}")
+else:
+    current_user = "Valued Guest"
+    current_points = 0
+    if mobile_input:
+        st.sidebar.error("Number not found. Showing guest profile.")
 
+# --- NAVIGATION TABS ---
+tab1, tab2, tab3 = st.tabs(["💳 Loyalty Wallet", "📅 Book Appointment", "💬 Message Support"])
+
+# --- TAB 1: LOYALTY WALLET ---
 with tab1:
-    pd_app.markdown(f"""
-    <div class="wallet-card">
-        <p style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #BEE3F8;">Luxury Loyalty Card</p>
-        <p style="font-size: 16px; margin-bottom: 5px;">Your Treatment Points</p>
-        <h1 style="font-size: 48px; color: #DFBA6B; margin: 0;">{pd_app.session_state.points}</h1>
-        <p style="font-size: 14px; color: #E2E8F0;">Equivalent to ₹{pd_app.session_state.points}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"### Welcome back, {current_user}!")
     
-    pd_app.info("✨ Collect points with every visit! 1 Point earned for every ₹100 spent.")
+    with st.container():
+        st.markdown(
+            f"""
+            <div style="background-color:#1e3d59; padding:25px; border-radius:15px; border-left: 8px solid #ffc13b; color: white;">
+                <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 12px; margin: 0; color: #ffc13b;">Luxury Loyalty Card</p>
+                <h4 style="margin: 10px 0 5px 0; color: white;">Your Treatment Points</h4>
+                <h1 style="font-size: 48px; margin: 0; color: #ffc13b;">{current_points}</h1>
+                <p style="font-size: 14px; opacity: 0.8; margin: 10px 0 0 0;">Equivalent to ₹{current_points}</p>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
     
-    # Referral Button
-    if pd_app.button("🎁 Refer a Friend & Earn 50 Points"):
-        pd_app.session_state.points += 50
-        pd_app.success("Referral link generated! 50 Points provisionally added to your wallet! 🎉")
-        pd_app.rerun()
+    st.info("✨ Collect points with every visit! 1 Point earned for every ₹100 spent.")
+    if st.button("🎁 Refer a Friend & Earn 50 Points"):
+        st.success("Referral link copied!")
 
+# --- TAB 2: BOOK APPOINTMENT ---
 with tab2:
-    pd_app.subheader("Schedule Your Next Visit")
+    st.markdown("### Schedule Your Next Visit")
+    appointment_date = st.date_input("Select Preferred Date")
+    appointment_time = st.selectbox("Select Preferred Time Slot", ["10:00 AM", "11:30 AM", "4:00 PM", "6:30 PM"])
+    treatment_type = st.selectbox("Purpose of Visit", ["Routine Checkup", "Dental Implant Consultation", "Cosmetic Dentistry"])
     
-    treatment = pd_app.selectbox("Select Treatment Area", [
-        "Routine Consultation & Cleaning",
-        "Advanced Implant Consultation",
-        "Cosmetic & Smile Design",
-        "Follow-up / Post-Op Check"
-    ])
-    
-    date = pd_app.date_input("Choose Preferred Date")
-    timeslot = pd_app.radio("Select Timeslot", ["10:00 AM - 12:00 PM", "12:00 PM - 02:00 PM", "06:00 PM - 09:00 PM"])
-    
-    if pd_app.button("Confirm Appointment Booking"):
-        pd_app.success(f"Request submitted for {treatment} on {date} during {timeslot}. Our team will confirm via WhatsApp shortly!")
+    if st.button("Confirm Appointment Request"):
+        st.success(f"Request submitted for {appointment_date} at {appointment_time}.")
 
+# --- TAB 3: MESSAGE SUPPORT ---
 with tab3:
-    pd_app.subheader("Direct Message Support")
-    pd_app.caption("Our clinic team typically replies within 2 hours during clinic hours (10 AM - 8 PM).")
-    
-    user_msg = pd_app.text_area("How can we help you today?", placeholder="e.g., Experiencing mild sensitivity after my procedure...")
-    
-    if pd_app.button("Send Message"):
+    st.markdown("### Secure Chat with Front Desk")
+    user_msg = st.text_input("Type your question here:")
+    if st.button("Send Message"):
         if user_msg:
-            pd_app.success("Message sent! Our support team will review your note shortly.")
-            pd_app.info("We’ll follow up as soon as possible during clinic hours.")
-        else:
-            pd_app.warning("Please type a message before sending.")
+            st.info("Message sent securely to the clinic dashboard.")
